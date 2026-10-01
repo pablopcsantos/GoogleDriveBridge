@@ -1,5 +1,7 @@
 # GoogleDriveBridge
 
+## Smart Folder Copier
+
 Read this in other languages: [Português](README.md)
 
 Web utility built with **Google Apps Script** to recursively copy files and subfolders between two Google Drive folders through a simple HTML interface.
