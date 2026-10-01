@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; color: #333; }
+      .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+      h2 { text-align: center; color: #1a73e8; }
+      label { font-weight: bold; display: block; margin-top: 15px; }
+      input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+      button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+      button:hover { background-color: #1557b0; }
+      button:disabled { background-color: #ccc; cursor: not-allowed; }
+      #status-box { margin-top: 20px; padding: 15px; border-radius: 4px; font-size: 14px; text-align: center; display: none; background-color: #e8f0fe; border: 1px solid #1a73e8; }
+      .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(26,115,232,0.3); border-radius: 50%; border-top-color: #1a73e8; animation: spin 1s ease-in-out infinite; vertical-align: middle; margin-right: 10px; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Copiador de Pastas</h2>
+      <p style="text-align: center; font-size: 14px; color: #666;">Copie arquivos sem se preocupar com o limite de 6 minutos do Google.</p>
+      
+      <label>ID da Pasta de Origem:</label>
+      <input type="text" id="sourceId" placeholder="Ex: 1A2b3C4d5E6f7G8h9I0j...">
+      
+      <label>ID da Pasta de Destino:</label>
+      <input type="text" id="destId" placeholder="Ex: 0J9i8H7g6F5e4D3c2B1a...">
+      
+      <button id="btnStart" onclick="iniciarCopia()">Iniciar Cópia</button>
+      
+      <div id="status-box"></div>
+    </div>
+
+    <script>
+      var ciclos = 0;
+
+      function iniciarCopia() {
+        var sourceId = document.getElementById('sourceId').value.trim();
+        var destId = document.getElementById('destId').value.trim();
+        
+        if(!sourceId || !destId) {
+          alert("Por favor, preencha os dois IDs.");
+          return;
+        }
+
+        document.getElementById('btnStart').disabled = true;
+        document.getElementById('btnStart').innerText = "Copiando...";
+        
+        ciclos = 1;
+        atualizarStatus("Iniciando varredura (Ciclo " + ciclos + ")... Não feche esta janela.", true);
+        
+        // Chama a função lá do Código.gs
+        chamarBackend(sourceId, destId);
+      }
+
+      function chamarBackend(sourceId, destId) {
+        google.script.run
+          .withSuccessHandler(function(resposta) {
+            if (resposta.status === 'pausado') {
+              ciclos++;
+              atualizarStatus("Tempo limite evitado. Retomando automaticamente (Ciclo " + ciclos + ")...", true);
+              chamarBackend(sourceId, destId); // Aqui está a mágica: chama de novo sozinho!
+            } else if (resposta.status === 'concluido') {
+              atualizarStatus(resposta.mensagem, false);
+              finalizar();
+            } else if (resposta.status === 'erro') {
+              atualizarStatus(resposta.mensagem, false);
+              finalizar();
+            }
+          })
+          .withFailureHandler(function(erro) {
+            atualizarStatus("❌ Erro de conexão: " + erro.message, false);
+            finalizar();
+          })
+          .startCopyLoop(sourceId, destId);
+      }
+
+      function atualizarStatus(mensagem, carregando) {
+        var statusBox = document.getElementById('status-box');
+        statusBox.style.display = 'block';
+        if(carregando) {
+          statusBox.innerHTML = '<div class="spinner"></div>' + mensagem;
+        } else {
+          statusBox.innerHTML = '<strong>' + mensagem + '</strong>';
+        }
+      }
+
+      function finalizar() {
+        var btn = document.getElementById('btnStart');
+        btn.disabled = false;
+        btn.innerText = "Iniciar Nova Cópia";
+      }
+    </script>
+  </body>
+</html>
