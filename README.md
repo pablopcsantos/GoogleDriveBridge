@@ -1,5 +1,7 @@
 # GoogleDriveBridge
 
+Read this in other languages: [English](README.en.md)
+
 Aplicação web utilitária construída com **Google Apps Script** para copiar recursivamente arquivos e subpastas entre duas pastas do Google Drive a partir de uma interface HTML simples.
 
 ## Funcionalidades
